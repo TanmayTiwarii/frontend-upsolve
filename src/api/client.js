@@ -16,18 +16,27 @@ export const fetchRecommendations = async (type, username) => {
 
   console.log(`[Upsolve API] Fetching: ${url}`);
 
+  let data;
   try {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Server returned HTTP ${response.status}: ${response.statusText}`);
     }
-    
-    const data = await response.json();
-    return data;
+    data = await response.json();
   } catch (error) {
     console.error('[Upsolve API] Request failed:', error);
     throw new Error(
       `API Connection Failed: ${error.message}. Make sure the backend server at ${API_URL} is online and CORS is enabled.`
     );
   }
+
+  // Handle application-level errors returned by the backend
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    throw new Error('Unexpected response format from the server.');
+  }
+
+  return data;
 };
