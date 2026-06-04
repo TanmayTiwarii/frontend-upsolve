@@ -265,6 +265,31 @@ body {
   box-shadow: 0 0 0 2px rgba(242, 161, 52, 0.15);
 }
 
+.btn-input-enter {
+  position: absolute;
+  right: 6px;
+  background: var(--accent-orange);
+  color: #000000;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.9rem;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-input-enter:hover:not(:disabled) {
+  background: var(--accent-orange-hover);
+}
+
+.btn-input-enter:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 /* --- Recommendations Header --- */
 .section-header-row {
   display: flex;

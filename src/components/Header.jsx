@@ -2,7 +2,7 @@ import React from 'react';
 import { Terminal, BookOpen } from 'lucide-react';
 import logo from '../assets/image.png';
 
-export default function Header({ username, activeTab, setActiveTab }) {
+export default function Header({ username, activeTab, setActiveTab, avatarUrl }) {
   // Get first letter of username for avatar content
   const getAvatarContent = () => {
     if (username && username.trim()) {
@@ -44,7 +44,15 @@ export default function Header({ username, activeTab, setActiveTab }) {
 
         <div className="header-profile">
           <div className="header-avatar" title={username || 'Guest Profile'}>
-            {getAvatarContent()}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={username}
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+              />
+            ) : (
+              getAvatarContent()
+            )}
           </div>
         </div>
       </div>

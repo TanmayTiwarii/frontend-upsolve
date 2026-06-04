@@ -40,3 +40,113 @@ export const fetchRecommendations = async (type, username) => {
 
   return data;
 };
+
+/**
+ * Fetches user profile, problems solved, streak, and contest ranking details from LeetCode GraphQL.
+ * @param {string} username - LeetCode username
+ * @returns {Promise<Object>} User details
+ */
+export const fetchLeetCodeProfile = async (username) => {
+  if (!username || !username.trim()) {
+    throw new Error('Username is required');
+  }
+
+  const query = `
+    query userDetails($username: String!) {
+      matchedUser(username: $username) {
+        username
+        profile {
+          userAvatar
+          ranking
+        }
+        submitStatsGlobal {
+          acSubmissionNum {
+            difficulty
+            count
+          }
+        }
+        userCalendar {
+          streak
+          totalActiveDays
+        }
+        tagProblemCounts {
+          advanced {
+            tagName
+            problemsSolved
+          }
+          intermediate {
+            tagName
+            problemsSolved
+          }
+          fundamental {
+            tagName
+            problemsSolved
+          }
+        }
+      }
+      userContestRanking(username: $username) {
+        rating
+        globalRanking
+      }
+    }
+  `;
+
+  const url = '/leetcode-graphql';
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables: { username: username.trim() }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`LeetCode server returned HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(json.errors[0]?.message || 'GraphQL Error from LeetCode');
+  }
+
+  if (!json.data || !json.data.matchedUser) {
+    throw new Error('LeetCode username not found.');
+  }
+
+  const matchedUser = json.data.matchedUser;
+  const contestRanking = json.data.userContestRanking;
+
+  // Calculate top weakness dynamically
+  const tagCounts = matchedUser.tagProblemCounts;
+  let topWeakness = '—';
+  if (tagCounts) {
+    const allTags = [
+      ...(tagCounts.advanced || []),
+      ...(tagCounts.intermediate || [])
+    ];
+    const activeTags = allTags.filter(t => t.problemsSolved > 0);
+    if (activeTags.length > 0) {
+      activeTags.sort((a, b) => a.problemsSolved - b.problemsSolved);
+      topWeakness = activeTags[0].tagName;
+    }
+  }
+
+  const solvedNum = matchedUser.submitStatsGlobal?.acSubmissionNum?.find(
+    (x) => x.difficulty === 'All'
+  )?.count || 0;
+
+  return {
+    username: matchedUser.username,
+    avatar: matchedUser.profile?.userAvatar || null,
+    ranking: matchedUser.profile?.ranking || null,
+    solved: solvedNum,
+    streak: matchedUser.userCalendar?.streak || 0,
+    globalRanking: contestRanking?.globalRanking || matchedUser.profile?.ranking || null,
+    rating: contestRanking?.rating || null,
+    topWeakness
+  };
+};
+
