@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import ControlPanel from './components/ControlPanel';
+import Sidebar from './components/Sidebar';
 import ProblemGrid from './components/ProblemGrid';
+import HowItWorks from './components/HowItWorks';
 import { fetchRecommendations } from './api/client';
+import { Terminal } from 'lucide-react';
 
 export default function App() {
+  // Navigation State
+  const [activeTab, setActiveTab] = useState('recommendations');
+
   // Username State (loaded from localStorage on init)
   const [username, setUsername] = useState(() => {
     return localStorage.getItem('upsolve_username') || '';
@@ -36,6 +41,8 @@ export default function App() {
       setProblems(data);
       setRecommendationType(type);
       setHasSearched(true);
+      // Auto-switch to recommendations tab when fetching new data
+      setActiveTab('recommendations');
     } catch (err) {
       setError(err.message);
       setProblems([]);
@@ -46,38 +53,102 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <div className="bg-glow-orb orb-1"></div>
-      <div className="bg-glow-orb orb-2"></div>
-      <Header />
+      {/* Header Navigation and Profile */}
+      <Header
+        username={username}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
-      <main className="app-main">
-        <ControlPanel
-          username={username}
-          setUsername={setUsername}
-          onFetch={handleFetchRecommendations}
-          loading={loading}
-        />
+      {/* Conditional tab rendering */}
+      {activeTab === 'recommendations' ? (
+        <>
+          {/* Main Dashboard Layout */}
+          <main className="app-main">
+            {/* Left column (welcome message, username input, daily recommendations) */}
+            <div className="main-column">
+              <section className="welcome-section">
+                <div className="welcome-title-group">
+                  <h1>Welcome back, Engineer</h1>
+                  <p>Analyze your LeetCode performance and conquer your next challenge.</p>
+                </div>
 
-        <div style={{ marginTop: '2.5rem' }}>
-          <ProblemGrid
-            problems={problems}
-            loading={loading}
-            error={error}
-            hasSearched={hasSearched}
-            showSimilarity={recommendationType === 'similar'}
-          />
-        </div>
-      </main>
+                <div className="username-input-group">
+                  <label htmlFor="usernameInput" className="username-label">
+                    LeetCode Username
+                  </label>
+                  <div className="terminal-input-wrapper">
+                    <Terminal size={16} className="terminal-icon" />
+                    <input
+                      id="usernameInput"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="larry_the_dev"
+                      className="terminal-input"
+                    />
+                  </div>
+                </div>
+              </section>
 
-      <footer className="app-footer">
-        <p>
-          Upsolve Recommendation Client © 2026. Made with ❤️ for competitive programmers.
-          {" | "}
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-            Documentation
-          </a>
-        </p>
-      </footer>
+              <ProblemGrid
+                problems={problems}
+                loading={loading}
+                error={error}
+                hasSearched={hasSearched}
+                showSimilarity={recommendationType === 'similar'}
+              />
+            </div>
+
+            {/* Right sidebar column */}
+            <Sidebar
+              username={username}
+              onFetch={handleFetchRecommendations}
+              loading={loading}
+            />
+          </main>
+
+          {/* Bottom Skill Trajectory */}
+          <section className="trajectory-panel">
+            <div className="trajectory-header">
+              <h3 className="trajectory-title">Current Skill Trajectory</h3>
+              <div className="trajectory-progress-row">
+                <div className="trajectory-progress-bar-wrapper">
+                  <div
+                    className="trajectory-progress-bar-fill"
+                    style={{ width: hasSearched ? '75%' : '0%' }}
+                  />
+                </div>
+                <span className="trajectory-percent">
+                  {hasSearched ? '75% Complete' : '—% Complete'}
+                </span>
+              </div>
+            </div>
+
+            <div className="trajectory-stats-row">
+              <div className="trajectory-stat-box">
+                <span className="box-label">Solved</span>
+                <span className="box-value">—</span>
+              </div>
+              <div className="trajectory-stat-box">
+                <span className="box-label">Streak</span>
+                <span className="box-value text-streak">—</span>
+              </div>
+              <div className="trajectory-stat-box">
+                <span className="box-label">Global Rank</span>
+                <span className="box-value">—</span>
+              </div>
+              <div className="trajectory-stat-box">
+                <span className="box-label">Points</span>
+                <span className="box-value">—</span>
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        /* Explanatory page explaining recommendations algorithms */
+        <HowItWorks />
+      )}
     </div>
   );
 }

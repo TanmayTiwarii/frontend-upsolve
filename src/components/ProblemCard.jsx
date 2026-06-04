@@ -1,22 +1,8 @@
 import React from 'react';
-import { ExternalLink, Award, Hash } from 'lucide-react';
+import { ExternalLink, ArrowRight } from 'lucide-react';
 
-export default function ProblemCard({ problem, showSimilarity }) {
+export default function ProblemCard({ problem, showSimilarity, isHero = false }) {
   const { id, problem_name, difficulty, topics, similarity } = problem;
-
-  // Convert difficulty to color class
-  const getDifficultyClass = (diff) => {
-    switch (diff.toLowerCase()) {
-      case 'easy':
-        return 'diff-easy';
-      case 'medium':
-        return 'diff-medium';
-      case 'hard':
-        return 'diff-hard';
-      default:
-        return 'diff-unknown';
-    }
-  };
 
   // Convert problem name to standard LeetCode URL slug
   const getLeetCodeUrl = (name) => {
@@ -34,61 +20,85 @@ export default function ProblemCard({ problem, showSimilarity }) {
     ? topics.split(',').map((topic) => topic.trim()).filter(Boolean)
     : [];
 
-  const simPercent = Math.round(similarity * 100);
+  const simPercent = similarity ? Math.round(similarity * 100) : null;
+  const diffClass = difficulty ? difficulty.toLowerCase() : 'unknown';
+
+  if (isHero) {
+    return (
+      <a
+        href={getLeetCodeUrl(problem_name)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hero-card"
+      >
+        <div className="hero-card-meta">
+          <span className="weakness-tag">Picked For Your Weakness</span>
+          <span className={`difficulty-badge ${diffClass}`}>{difficulty}</span>
+        </div>
+
+        <div className="hero-card-main">
+          <div className="hero-card-details">
+            <h3 className="hero-card-title">{problem_name}</h3>
+            {/* Keeping description empty/blank as it is not available in the API */}
+            <p className="hero-card-description"></p>
+          </div>
+
+          <div className="hero-card-stat">
+            <span className="stat-label">
+              {simPercent !== null ? 'Match Rate' : 'Success Rate'}
+            </span>
+            <span className="stat-value">
+              {simPercent !== null ? `${simPercent}%` : '—'}
+            </span>
+          </div>
+        </div>
+
+        <div className="hero-card-footer">
+          <div className="tags-row">
+            {topicList.map((topic, index) => (
+              <span key={index} className="tag-pill">
+                {topic}
+              </span>
+            ))}
+          </div>
+          <div className="hero-arrow">
+            <ArrowRight size={20} />
+          </div>
+        </div>
+      </a>
+    );
+  }
 
   return (
-    <div className={`problem-card glass-hover ${getDifficultyClass(difficulty)}`}>
-      <div className="card-top">
-        <span className="problem-id">#{id}</span>
-        <span className={`difficulty-badge ${getDifficultyClass(difficulty)}`}>
-          <Award size={12} />
-          {difficulty}
-        </span>
+    <a
+      href={getLeetCodeUrl(problem_name)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="problem-card"
+    >
+      <div className="problem-card-header">
+        <span className={`difficulty-badge ${diffClass}`}>{difficulty}</span>
+        <div className="problem-card-link-icon">
+          <ExternalLink size={16} />
+        </div>
       </div>
 
-      <h3 className="problem-title">{problem_name}</h3>
+      <div className="problem-card-title-row">
+        <h3 className="problem-card-title">{problem_name}</h3>
+      </div>
 
-      {showSimilarity && (
-        <div className="similarity-section">
-          <div className="similarity-meta">
-            <span className="similarity-label">Similarity Match</span>
-            <span className="similarity-value">{simPercent}%</span>
-          </div>
-          <div className="progress-track">
-            <div 
-              className="progress-bar" 
-              style={{ width: `${simPercent}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Keeping description empty/blank as it is not available in the API */}
+      <p className="problem-card-description"></p>
 
-      <div className="topics-section">
-        <div className="topics-label">
-          <Hash size={12} />
-          <span>Topics</span>
-        </div>
-        <div className="topics-list">
+      <div className="problem-card-footer">
+        <div className="tags-row">
           {topicList.map((topic, index) => (
-            <span key={index} className="topic-tag">
+            <span key={index} className="tag-pill">
               {topic}
             </span>
           ))}
-          {topicList.length === 0 && <span className="no-topics">General</span>}
         </div>
       </div>
-
-      <div className="card-actions">
-        <a 
-          href={getLeetCodeUrl(problem_name)} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="solve-link"
-        >
-          <span>Solve Problem</span>
-          <ExternalLink size={14} />
-        </a>
-      </div>
-    </div>
+    </a>
   );
 }
