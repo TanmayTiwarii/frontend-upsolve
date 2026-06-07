@@ -3,45 +3,10 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ProblemGrid from './components/ProblemGrid';
 import HowItWorks from './components/HowItWorks';
+import Login from './components/Login';
 import { fetchRecommendations, fetchLeetCodeProfile } from './api/client';
 import { Terminal } from 'lucide-react';
-const DEFAULT_PROBLEMS = [
-  {
-    id: 146,
-    problem_name: 'LRU Cache',
-    difficulty: 'Hard',
-    topics: 'Hash Table, Linked List, Design',
-    similarity: 0.412
-  },
-  {
-    id: 1,
-    problem_name: 'Two Sum',
-    difficulty: 'Easy',
-    topics: 'Array',
-    similarity: 0.85
-  },
-  {
-    id: 3,
-    problem_name: 'Longest Substring Without Repeating Characters',
-    difficulty: 'Medium',
-    topics: 'String, Sliding Window',
-    similarity: 0.72
-  },
-  {
-    id: 11,
-    problem_name: 'Container With Most Water',
-    difficulty: 'Medium',
-    topics: 'Greedy, Two Pointers',
-    similarity: 0.65
-  },
-  {
-    id: 23,
-    problem_name: 'Merge k Sorted Lists',
-    difficulty: 'Hard',
-    topics: 'Heap, Divide & Conquer',
-    similarity: 0.58
-  }
-];
+import { getDailyProblems } from './data/problems';
 
 export default function App() {
   // Navigation State
@@ -52,10 +17,7 @@ export default function App() {
     return localStorage.getItem('upsolve_username') || '';
   });
 
-  // Temporary Input Value State
-  const [inputValue, setInputValue] = useState(() => {
-    return localStorage.getItem('upsolve_username') || '';
-  });
+
 
   // LeetCode Profile GraphQL State
   const [profileData, setProfileData] = useState(null);
@@ -75,12 +37,13 @@ export default function App() {
     }
   }, []);
 
-  // Results State (initialized with default problems so it is never empty)
-  const [problems, setProblems] = useState(DEFAULT_PROBLEMS);
+  // Results State
+  const [problems, setProblems] = useState(() => getDailyProblems());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [recommendationType, setRecommendationType] = useState('similar');
+  const [isDaily, setIsDaily] = useState(true);
 
   // Fetches LeetCode GraphQL profile details
   const fetchProfileDetails = async (name) => {
@@ -99,24 +62,34 @@ export default function App() {
     }
   };
 
-  // Triggered when LeetCode Username input is submitted
-  const handleUsernameSubmit = async (e) => {
-    if (e) e.preventDefault();
-    if (!inputValue.trim()) return;
+  // Triggered when LeetCode Username input is submitted from Login page
+  const handleLogin = async (inputName) => {
+    if (!inputName.trim()) return;
 
     setProfileLoading(true);
     setProfileError(null);
     try {
-      const profile = await fetchLeetCodeProfile(inputValue);
+      const profile = await fetchLeetCodeProfile(inputName);
       setProfileData(profile);
-      setUsername(inputValue); // Only update resolved username on successful fetch
+      setUsername(inputName); // Only update resolved username on successful fetch
     } catch (err) {
       console.error('[App] Failed to fetch LeetCode profile:', err);
       setProfileError(err.message || 'Failed to load LeetCode profile.');
       setProfileData(null);
+      // Wait, we need to handle error display in Login page maybe, but for now throwing alert or just failing is ok.
+      alert(err.message || 'Failed to load LeetCode profile.');
     } finally {
       setProfileLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    setUsername('');
+    setProfileData(null);
+    setProblems(getDailyProblems());
+    setIsDaily(true);
+    setActiveTab('recommendations');
+    localStorage.removeItem('upsolve_username');
   };
 
   // Triggered when requesting recommendations
@@ -136,6 +109,7 @@ export default function App() {
       setProblems(data);
       setRecommendationType(type);
       setHasSearched(true);
+      setIsDaily(false);
       // Auto-switch to recommendations tab when fetching new data
       setActiveTab('recommendations');
     } catch (err) {
@@ -176,6 +150,10 @@ export default function App() {
     return '—';
   };
 
+  if (!username) {
+    return <Login onLogin={handleLogin} loading={profileLoading} />;
+  }
+
   return (
     <div className="app-container">
       {/* Header Navigation and Profile */}
@@ -195,41 +173,19 @@ export default function App() {
             <div className="main-column">
               <section className="welcome-section">
                 <div className="welcome-title-group">
-                  <h1>Welcome back, Engineer</h1>
+                  <h1>Welcome back</h1>
                   <p>Analyze your LeetCode performance and conquer your next challenge.</p>
                 </div>
 
-                <div className="username-input-group">
-                  <label htmlFor="usernameInput" className="username-label">
-                    LeetCode Username
-                  </label>
-                  <form onSubmit={handleUsernameSubmit} className="terminal-input-wrapper">
-                    <Terminal size={16} className="terminal-icon" />
-                    <input
-                      id="usernameInput"
-                      type="text"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="larry_the_dev"
-                      className="terminal-input"
-                      style={{ paddingRight: '80px' }}
-                    />
-                    <button
-                      type="submit"
-                      className="btn-input-enter"
-                      disabled={profileLoading || !inputValue.trim()}
-                    >
-                      {profileLoading ? '...' : 'Enter'}
-                    </button>
-                  </form>
-                </div>
+
               </section>
 
               <ProblemGrid
                 problems={problems}
                 loading={loading}
                 error={error}
-                showSimilarity={recommendationType === 'similar'}
+                showSimilarity={recommendationType === 'similar' && !isDaily}
+                isDaily={isDaily}
               />
             </div>
 
@@ -241,6 +197,7 @@ export default function App() {
               profileData={profileData}
               profileLoading={profileLoading}
               profileError={profileError}
+              onLogout={handleLogout}
             />
           </main>
 

@@ -2,7 +2,7 @@ import React from 'react';
 import ProblemCard from './ProblemCard';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
-export default function ProblemGrid({ problems, loading, error, showSimilarity }) {
+export default function ProblemGrid({ problems, loading, error, showSimilarity, isDaily }) {
   // Get a deterministic daily index based on current date string (e.g. "2026-06-04")
   const getDailyIndex = (length) => {
     if (length <= 1) return 0;
@@ -20,11 +20,11 @@ export default function ProblemGrid({ problems, loading, error, showSimilarity }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Section Title - Always visible */}
-      <div className="section-header-row">
-        <h2 className="section-title">⚡ Daily Recommendations</h2>
-      </div>
-
+      {isDaily && !loading && !error && problems.length > 0 && (
+        <div className="section-header-row">
+          <h2 className="section-title">⚡ Daily Problems</h2>
+        </div>
+      )}
       {/* Render content based on state */}
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

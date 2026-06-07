@@ -32,7 +32,6 @@ export default function ProblemCard({ problem, showSimilarity, isHero = false })
         className="hero-card"
       >
         <div className="hero-card-meta">
-          <span className="weakness-tag">Picked For Your Weakness</span>
           <span className={`difficulty-badge ${diffClass}`}>{difficulty}</span>
         </div>
 
