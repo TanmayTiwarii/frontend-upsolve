@@ -1,8 +1,8 @@
 import React from 'react';
-import { Terminal, BookOpen } from 'lucide-react';
+import { Terminal, BookOpen, LogOut } from 'lucide-react';
 import logo from '../assets/image.png';
 
-export default function Header({ username, activeTab, setActiveTab, avatarUrl }) {
+export default function Header({ username, activeTab, setActiveTab, avatarUrl, onLogout }) {
   // Get first letter of username for avatar content
   const getAvatarContent = () => {
     if (username && username.trim()) {
@@ -42,7 +42,7 @@ export default function Header({ username, activeTab, setActiveTab, avatarUrl })
           </button>
         </nav>
 
-        <div className="header-profile">
+        <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div className="header-avatar" title={username || 'Guest Profile'}>
             {avatarUrl ? (
               <img
@@ -54,6 +54,18 @@ export default function Header({ username, activeTab, setActiveTab, avatarUrl })
               getAvatarContent()
             )}
           </div>
+          {username && (
+            <button 
+              type="button" 
+              onClick={onLogout}
+              className="btn-logout"
+              title="Logout"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+            >
+              <LogOut size={14} />
+              <span>Logout</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

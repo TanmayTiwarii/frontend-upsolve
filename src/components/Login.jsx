@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Terminal } from 'lucide-react';
 import logo from '../assets/image.png';
 
-export default function Login({ onLogin, loading }) {
+export default function Login({ onLogin, loading, error }) {
   const [inputValue, setInputValue] = useState('');
 
   const handleSubmit = (e) => {
@@ -45,6 +45,23 @@ export default function Login({ onLogin, loading }) {
             {loading ? 'Loading...' : 'Continue'}
           </button>
         </form>
+        {error && (
+          <div style={{
+            fontSize: '0.85rem',
+            color: 'var(--color-hard, #e74c3c)',
+            background: 'var(--color-hard-bg, rgba(231, 76, 60, 0.1))',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-sm, 6px)',
+            border: '1px solid rgba(231, 76, 60, 0.2)',
+            marginTop: '1.25rem',
+            lineHeight: 1.4,
+            textAlign: 'center'
+          }}>
+            {error.includes('Failed to fetch')
+              ? '⚠️ Network error or CORS policy blocked the request.'
+              : `⚠️ ${error}`}
+          </div>
+        )}
       </div>
     </div>
   );

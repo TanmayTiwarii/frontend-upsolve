@@ -62,7 +62,6 @@ export default function App() {
     }
   };
 
-  // Triggered when LeetCode Username input is submitted from Login page
   const handleLogin = async (inputName) => {
     if (!inputName.trim()) return;
 
@@ -76,8 +75,6 @@ export default function App() {
       console.error('[App] Failed to fetch LeetCode profile:', err);
       setProfileError(err.message || 'Failed to load LeetCode profile.');
       setProfileData(null);
-      // Wait, we need to handle error display in Login page maybe, but for now throwing alert or just failing is ok.
-      alert(err.message || 'Failed to load LeetCode profile.');
     } finally {
       setProfileLoading(false);
     }
@@ -151,7 +148,7 @@ export default function App() {
   };
 
   if (!username) {
-    return <Login onLogin={handleLogin} loading={profileLoading} />;
+    return <Login onLogin={handleLogin} loading={profileLoading} error={profileError} />;
   }
 
   return (
@@ -162,6 +159,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         avatarUrl={profileData?.avatar}
+        onLogout={handleLogout}
       />
 
       {/* Conditional tab rendering */}

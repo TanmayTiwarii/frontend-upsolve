@@ -7,8 +7,7 @@ export default function Sidebar({
   loading,
   profileData,
   profileLoading,
-  profileError,
-  onLogout
+  profileError
 }) {
   // Get initials for profile avatar
   const getAvatarContent = () => {
@@ -98,16 +97,7 @@ export default function Sidebar({
           </div>
           <div className="profile-name-group" style={{ flex: 1 }}>
             <span className="profile-name">{username.trim() || 'guest_engineer'}</span>
-            {username.trim() && <span className="profile-tier">Gold Tier Engineer</span>}
           </div>
-          <button 
-            type="button" 
-            onClick={onLogout}
-            className="btn-logout"
-            title="Logout"
-          >
-            Logout
-          </button>
         </div>
 
         <div className="profile-stats-list">
