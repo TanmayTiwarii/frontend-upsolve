@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal } from 'lucide-react';
+import { Terminal, Loader2 } from 'lucide-react';
 import logo from '../assets/image.png';
 
 export default function Login({ onLogin, loading, error }) {
@@ -11,6 +11,20 @@ export default function Login({ onLogin, loading, error }) {
       onLogin(inputValue.trim());
     }
   };
+
+  if (loading) {
+    return (
+      <div className="login-container">
+        <div className="login-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem' }}>
+          <Loader2 className="animate-spin" size={48} style={{ color: 'var(--color-primary, #3498db)', marginBottom: '1.5rem' }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--color-text, #fff)' }}>Authenticating...</h2>
+          <p style={{ color: 'var(--color-text-secondary, #a0aabf)', textAlign: 'center', fontSize: '0.9rem' }}>
+            Fetching your LeetCode profile securely.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">
