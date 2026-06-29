@@ -1,234 +1,204 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import Sidebar from './components/Sidebar';
+import Login from './components/Login';
+import AnalysisProgress from './components/AnalysisProgress';
+import Dashboard from './components/Dashboard';
 import ProblemGrid from './components/ProblemGrid';
 import HowItWorks from './components/HowItWorks';
-import Login from './components/Login';
 import { fetchRecommendations, fetchLeetCodeProfile } from './api/client';
-import { Terminal } from 'lucide-react';
-import { getDailyProblems } from './data/problems';
+
+// App view states
+const VIEW = {
+  LANDING: 'landing',           // not logged in
+  ANALYZING_LOGIN: 'analyzing-login', // fetching profile after login submit
+  DASHBOARD: 'dashboard',        // logged in, no recommendations yet
+  ANALYZING_RECS: 'analyzing-recs',   // fetching recommendations
+  RECOMMENDATIONS: 'recommendations', // showing 5 picks
+  HOW_IT_WORKS: 'how-it-works', // explanatory tab
+};
 
 export default function App() {
-  // Navigation State
-  const [activeTab, setActiveTab] = useState('recommendations');
+  // Persist username in localStorage
+  const [username, setUsername] = useState(() => localStorage.getItem('upsolve_username') || '');
 
-  // Username State (loaded from localStorage on init)
-  const [username, setUsername] = useState(() => {
-    return localStorage.getItem('upsolve_username') || '';
-  });
-
-
-
-  // LeetCode Profile GraphQL State
+  // Profile
   const [profileData, setProfileData] = useState(null);
-  const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState(null);
 
-  // Keep localStorage updated when username changes
+  // Recommendations
+  const [problems, setProblems] = useState([]);
+  const [recError, setRecError] = useState(null);
+  const [recommendationType, setRecommendationType] = useState('similar');
+
+  // View routing
+  const [view, setView] = useState(username ? VIEW.DASHBOARD : VIEW.LANDING);
+
+  // Sync username to localStorage
   useEffect(() => {
-    localStorage.setItem('upsolve_username', username);
+    if (username) {
+      localStorage.setItem('upsolve_username', username);
+    } else {
+      localStorage.removeItem('upsolve_username');
+    }
   }, [username]);
 
-  // Fetch profile on initial load if username is already saved
+  // On initial mount, if username stored, try fetching profile
   useEffect(() => {
-    const storedUsername = localStorage.getItem('upsolve_username') || '';
-    if (storedUsername.trim()) {
-      fetchProfileDetails(storedUsername);
+    const stored = localStorage.getItem('upsolve_username');
+    if (stored) {
+      fetchProfileSilent(stored);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Results State
-  const [problems, setProblems] = useState(() => getDailyProblems());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [recommendationType, setRecommendationType] = useState('similar');
-  const [isDaily, setIsDaily] = useState(true);
-
-  // Fetches LeetCode GraphQL profile details
-  const fetchProfileDetails = async (name) => {
-    if (!name || !name.trim()) return;
-    setProfileLoading(true);
-    setProfileError(null);
+  // Silently fetch profile (no view change)
+  const fetchProfileSilent = async (name) => {
     try {
       const profile = await fetchLeetCodeProfile(name);
       setProfileData(profile);
+      setProfileError(null);
     } catch (err) {
-      console.error('[App] Failed to fetch LeetCode profile:', err);
-      setProfileError(err.message || 'Failed to load LeetCode profile.');
-      setProfileData(null);
-    } finally {
-      setProfileLoading(false);
+      setProfileError(err.message);
     }
   };
 
+  // ---------- Login flow ----------
   const handleLogin = async (inputName) => {
     if (!inputName.trim()) return;
-
-    setProfileLoading(true);
     setProfileError(null);
+    setView(VIEW.ANALYZING_LOGIN);
+
     try {
-      const profile = await fetchLeetCodeProfile(inputName);
+      const profile = await fetchLeetCodeProfile(inputName.trim());
       setProfileData(profile);
-      setUsername(inputName); // Only update resolved username on successful fetch
+      setUsername(inputName.trim());
+      setView(VIEW.DASHBOARD);
     } catch (err) {
-      console.error('[App] Failed to fetch LeetCode profile:', err);
       setProfileError(err.message || 'Failed to load LeetCode profile.');
-      setProfileData(null);
-    } finally {
-      setProfileLoading(false);
+      setView(VIEW.LANDING);
     }
   };
 
+  // ---------- Logout ----------
   const handleLogout = () => {
     setUsername('');
     setProfileData(null);
-    setProblems(getDailyProblems());
-    setIsDaily(true);
-    setActiveTab('recommendations');
-    localStorage.removeItem('upsolve_username');
+    setProblems([]);
+    setRecError(null);
+    setProfileError(null);
+    setView(VIEW.LANDING);
   };
 
-  // Triggered when requesting recommendations
+  // ---------- Fetch recommendations ----------
   const handleFetchRecommendations = async (type) => {
-    if (!username.trim()) {
-      setError('Please enter a LeetCode username and press Enter first.');
-      return;
-    }
-    
-    // Refresh profile details alongside recommendations
-    fetchProfileDetails(username);
+    if (!username.trim()) return;
 
-    setLoading(true);
-    setError(null);
+    setRecError(null);
+    setRecommendationType(type);
+    setView(VIEW.ANALYZING_RECS);
+
+    // Refresh profile in background
+    fetchProfileSilent(username);
+
     try {
       const data = await fetchRecommendations(type, username);
       setProblems(data);
-      setRecommendationType(type);
-      setHasSearched(true);
-      setIsDaily(false);
-      // Auto-switch to recommendations tab when fetching new data
-      setActiveTab('recommendations');
+      setView(VIEW.RECOMMENDATIONS);
     } catch (err) {
-      setError(err.message);
-      setProblems([]);
-    } finally {
-      setLoading(false);
+      setRecError(err.message);
+      setView(VIEW.RECOMMENDATIONS); // show error state inside ProblemGrid
     }
   };
 
-
-
-  const getSolvedStat = () => {
-    if (profileLoading) return '...';
-    if (profileData && profileData.solved !== null) return profileData.solved;
-    return '—';
-  };
-
-  const getStreakStat = () => {
-    if (profileLoading) return '...';
-    if (profileData && profileData.streak !== null) return `${profileData.streak} Days`;
-    return '—';
-  };
-
-  const getRankStat = () => {
-    if (profileLoading) return '...';
-    if (profileData && profileData.globalRanking !== null) {
-      return `#${profileData.globalRanking.toLocaleString()}`;
+  // ---------- Nav tab switch ----------
+  const handleTabSwitch = (tab) => {
+    if (tab === 'how-it-works') {
+      setView(VIEW.HOW_IT_WORKS);
+    } else {
+      // 'recommendations' tab → go back to dashboard or recs
+      if (view === VIEW.RECOMMENDATIONS || view === VIEW.ANALYZING_RECS) {
+        setView(VIEW.RECOMMENDATIONS);
+      } else {
+        setView(VIEW.DASHBOARD);
+      }
     }
-    return '—';
   };
 
-  const getPointsStat = () => {
-    if (profileLoading) return '...';
-    if (profileData && profileData.rating !== null) {
-      return Math.round(profileData.rating).toLocaleString();
-    }
-    return '—';
+  // Back from recommendations → dashboard
+  const handleBackToDashboard = () => {
+    setProblems([]);
+    setRecError(null);
+    setView(VIEW.DASHBOARD);
   };
 
-  if (!username) {
-    return <Login onLogin={handleLogin} loading={profileLoading} error={profileError} />;
+  // ============================================================
+  // RENDER
+  // ============================================================
+
+  // 1. Not logged in → Landing
+  if (view === VIEW.LANDING) {
+    return (
+      <Login
+        onLogin={handleLogin}
+        loading={false}
+        error={profileError}
+      />
+    );
   }
+
+  // 2. Analyzing login (fetching profile after submit)
+  if (view === VIEW.ANALYZING_LOGIN) {
+    return (
+      <AnalysisProgress username={username || ''} />
+    );
+  }
+
+  // 3. Main app shell (logged in)
+  const activeTab =
+    view === VIEW.HOW_IT_WORKS ? 'how-it-works' : 'recommendations';
 
   return (
     <div className="app-container">
-      {/* Header Navigation and Profile */}
       <Header
         username={username}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabSwitch}
         avatarUrl={profileData?.avatar}
         onLogout={handleLogout}
       />
 
-      {/* Conditional tab rendering */}
-      {activeTab === 'recommendations' ? (
-        <>
-          {/* Main Dashboard Layout */}
-          <main className="app-main">
-            {/* Left column (welcome message, username input, daily recommendations) */}
-            <div className="main-column">
-              <section className="welcome-section">
-                <div className="welcome-title-group">
-                  <h1>Welcome back</h1>
-                  <p>Analyze your LeetCode performance and conquer your next challenge.</p>
-                </div>
+      <main className="app-main">
+        {/* --- How It Works tab --- */}
+        {view === VIEW.HOW_IT_WORKS && <HowItWorks />}
 
+        {/* --- Dashboard (choose mode) --- */}
+        {view === VIEW.DASHBOARD && (
+          <Dashboard
+            username={username}
+            profileData={profileData}
+            profileLoading={false}
+            onFetch={handleFetchRecommendations}
+            loading={false}
+          />
+        )}
 
-              </section>
+        {/* --- Analyzing recommendations --- */}
+        {view === VIEW.ANALYZING_RECS && (
+          <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AnalysisProgress username={username} />
+          </div>
+        )}
 
-              <ProblemGrid
-                problems={problems}
-                loading={loading}
-                error={error}
-                showSimilarity={recommendationType === 'similar' && !isDaily}
-                isDaily={isDaily}
-              />
-            </div>
-
-            {/* Right sidebar column */}
-            <Sidebar
-              username={username}
-              onFetch={handleFetchRecommendations}
-              loading={loading}
-              profileData={profileData}
-              profileLoading={profileLoading}
-              profileError={profileError}
-              onLogout={handleLogout}
-            />
-          </main>
-
-          {/* Bottom Skill Trajectory */}
-          <section className="trajectory-panel">
-            <div className="trajectory-header">
-              <h3 className="trajectory-title">Current Skill Trajectory</h3>
-            </div>
-
-            <div className="trajectory-stats-row">
-              <div className="trajectory-stat-box">
-                <span className="box-label">Solved</span>
-                <span className="box-value">{getSolvedStat()}</span>
-              </div>
-              <div className="trajectory-stat-box">
-                <span className="box-label">Streak</span>
-                <span className="box-value text-streak">{getStreakStat()}</span>
-              </div>
-              <div className="trajectory-stat-box">
-                <span className="box-label">Global Rank</span>
-                <span className="box-value">{getRankStat()}</span>
-              </div>
-              <div className="trajectory-stat-box">
-                <span className="box-label">Points</span>
-                <span className="box-value">{getPointsStat()}</span>
-              </div>
-            </div>
-          </section>
-        </>
-      ) : (
-        /* Explanatory page explaining recommendations algorithms */
-        <HowItWorks />
-      )}
+        {/* --- Recommendations screen --- */}
+        {view === VIEW.RECOMMENDATIONS && (
+          <ProblemGrid
+            problems={problems}
+            loading={false}
+            error={recError}
+            recommendationType={recommendationType}
+            onBack={handleBackToDashboard}
+          />
+        )}
+      </main>
     </div>
   );
 }

@@ -1,90 +1,129 @@
 import React from 'react';
 import ProblemCard from './ProblemCard';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Info, Sparkles, Zap } from 'lucide-react';
 
-export default function ProblemGrid({ problems, loading, error, showSimilarity, isDaily }) {
-  // Get a deterministic daily index based on current date string (e.g. "2026-06-04")
-  const getDailyIndex = (length) => {
-    if (length <= 1) return 0;
-    const dateStr = new Date().toISOString().split('T')[0];
-    let hash = 0;
-    for (let i = 0; i < dateStr.length; i++) {
-      hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return Math.abs(hash) % length;
-  };
+/**
+ * Recommendation screen — shows trust section + exactly 5 curated pick cards.
+ * Props:
+ *   problems:           array of problem objects
+ *   loading:            bool
+ *   error:              string | null
+ *   recommendationType: 'similar' | 'different'
+ *   onBack:             () => void  — navigate back to Dashboard
+ */
+export default function ProblemGrid({
+  problems,
+  loading,
+  error,
+  recommendationType = 'similar',
+  onBack,
+}) {
+  const isSimilar = recommendationType === 'similar';
 
-  const heroIndex = problems.length > 0 ? getDailyIndex(problems.length) : 0;
-  const heroProblem = problems.length > 0 ? problems[heroIndex] : null;
-  const gridProblems = problems.length > 0 ? problems.filter((_, idx) => idx !== heroIndex) : [];
+  if (loading) {
+    return (
+      <div className="recs-layout">
+        {/* Skeleton picks */}
+        <div className="picks-list">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton-card" style={{ gap: '1.25rem', opacity: 1 - i * 0.1 }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="skeleton-shimmer" style={{ height: 22, width: 70, borderRadius: 6 }} />
+                <div className="skeleton-shimmer" style={{ height: 22, width: 80, borderRadius: 6 }} />
+                <div className="skeleton-shimmer" style={{ height: 22, width: 60, borderRadius: 6 }} />
+              </div>
+              <div className="skeleton-shimmer sk-title" />
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div className="skeleton-shimmer" style={{ height: 48, flex: 1, borderRadius: 10 }} />
+                <div className="skeleton-shimmer" style={{ height: 64, width: 64, borderRadius: 12, flexShrink: 0 }} />
+              </div>
+              <div className="skeleton-shimmer sk-btn" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="status-container status-error">
+        <AlertCircle className="status-error-icon" size={36} />
+        <h2 className="status-title">Something went wrong</h2>
+        <p className="status-desc">{error}</p>
+        {onBack && (
+          <button onClick={onBack} className="btn-back" style={{ marginTop: '0.5rem' }}>
+            ← Back to Dashboard
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (problems.length === 0) {
+    return (
+      <div className="status-container">
+        <RefreshCw className="status-icon" size={36} />
+        <h2 className="status-title">No picks found</h2>
+        <p className="status-desc">
+          We couldn't find recommendations. Please check your username and try again.
+        </p>
+        {onBack && (
+          <button onClick={onBack} className="btn-back" style={{ marginTop: '0.5rem' }}>
+            ← Try again
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {isDaily && !loading && !error && problems.length > 0 && (
-        <div className="section-header-row">
-          <h2 className="section-title">⚡ Daily Problems</h2>
+    <div className="recs-layout">
+      {/* Header row */}
+      <div className="picks-header">
+        <div className="picks-title">
+          <span className="picks-eyebrow">{isSimilar ? 'Similar Mode' : 'Exploration Mode'}</span>
+          <h2>
+            {isSimilar ? <Sparkles size={18} style={{ color: 'var(--coral)' }} /> : <Zap size={18} style={{ color: 'var(--amber)' }} />}
+            Today's Personalized Picks
+          </h2>
         </div>
-      )}
-      {/* Render content based on state */}
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Hero Card Skeleton */}
-          <div className="skeleton-card" style={{ height: '240px' }}>
-            <div className="skeleton-shimmer sk-line-sm" />
-            <div className="skeleton-shimmer sk-line-md" style={{ height: '36px', marginTop: '10px' }} />
-            <div className="skeleton-shimmer sk-line-lg" style={{ height: '16px', marginTop: '10px' }} />
-            <div className="skeleton-shimmer sk-tags" style={{ marginTop: '20px' }} />
-          </div>
-          {/* Grid Skeletons */}
-          <div className="problems-grid">
-            {[1, 2, 4].map((idx) => (
-              <div key={idx} className="skeleton-card" style={{ height: '180px' }}>
-                <div className="skeleton-shimmer sk-line-sm" />
-                <div className="skeleton-shimmer sk-line-md" style={{ marginTop: '10px' }} />
-                <div className="skeleton-shimmer sk-tags" style={{ marginTop: '20px' }} />
-              </div>
-            ))}
-          </div>
+        <div className={`picks-type-badge ${isSimilar ? 'similar' : 'different'}`}>
+          {isSimilar ? '⟳ Similar' : '↗ New Territory'}
         </div>
-      ) : error ? (
-        <div className="status-container status-error" style={{ padding: '3rem 2rem' }}>
-          <AlertCircle className="status-error-icon" size={36} />
-          <h2 className="status-title">Connection Error</h2>
-          <p className="status-desc">{error}</p>
-        </div>
-      ) : problems.length === 0 ? (
-        <div className="status-container" style={{ padding: '3rem 2rem' }}>
-          <RefreshCw className="status-icon" size={36} />
-          <h2 className="status-title">No Recommendations Found</h2>
-          <p className="status-desc">
-            We couldn't retrieve recommendations. Please check the profile and try again.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Hero card pick */}
-          {heroProblem && (
-            <ProblemCard
-              problem={heroProblem}
-              showSimilarity={showSimilarity}
-              isHero={true}
-            />
-          )}
+      </div>
 
-          {/* Remaining recommendations grid */}
-          {gridProblems.length > 0 && (
-            <div className="problems-grid">
-              {gridProblems.map((problem) => (
-                <ProblemCard
-                  key={problem.id}
-                  problem={problem}
-                  showSimilarity={showSimilarity}
-                  isHero={false}
-                />
-              ))}
-            </div>
-          )}
-        </>
+      {/* Trust section */}
+      <div className="trust-section">
+        <div className="trust-icon">
+          <Info size={16} />
+        </div>
+        <p className="trust-text">
+          These recommendations were generated by analyzing your solved problems and selecting the{' '}
+          <strong>five most relevant problems</strong> using{' '}
+          <strong>{isSimilar ? 'cosine similarity on semantic embeddings' : 'tag-weight diversity scoring'}</strong>.
+          Each pick is curated to your specific profile — not generic suggestions.
+        </p>
+      </div>
+
+      {/* 5 curated pick cards */}
+      <div className="picks-list">
+        {problems.slice(0, 5).map((problem, idx) => (
+          <ProblemCard
+            key={problem.id ?? idx}
+            problem={problem}
+            index={idx}
+            showSimilarity={isSimilar}
+            recommendationType={recommendationType}
+          />
+        ))}
+      </div>
+
+      {/* Back link */}
+      {onBack && (
+        <button onClick={onBack} className="btn-back" style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>
+          ← Choose a different mode
+        </button>
       )}
     </div>
   );

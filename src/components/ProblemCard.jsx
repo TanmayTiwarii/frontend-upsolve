@@ -1,102 +1,109 @@
 import React from 'react';
-import { ExternalLink, ArrowRight } from 'lucide-react';
+import { ExternalLink, Lightbulb } from 'lucide-react';
 
-export default function ProblemCard({ problem, showSimilarity, isHero = false }) {
-  const { id, problem_name, difficulty, topics, similarity } = problem;
+/**
+ * Curated pick card — used in the 5-card recommendation screen.
+ * Props:
+ *   problem:        { id, problem_name, difficulty, topics, similarity }
+ *   index:          0-based position (0–4)
+ *   showSimilarity: bool
+ *   recommendationType: 'similar' | 'different'
+ */
+export default function ProblemCard({ problem, index = 0, showSimilarity = false, recommendationType = 'similar' }) {
+  const { problem_name, difficulty, topics, similarity } = problem;
 
-  // Convert problem name to standard LeetCode URL slug
+  // Build LeetCode URL slug
   const getLeetCodeUrl = (name) => {
-    const slug = name
+    const slug = (name || '')
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s-]/g, '') // remove special chars
-      .replace(/\s+/g, '-')         // replace spaces with hyphens
-      .replace(/-+/g, '-');         // remove duplicate hyphens
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
     return `https://leetcode.com/problems/${slug}/`;
   };
 
-  // Convert topic string to array of tags
+  // Parse topics
   const topicList = topics
-    ? topics.split(',').map((topic) => topic.trim()).filter(Boolean)
+    ? topics.split(',').map((t) => t.trim()).filter(Boolean)
     : [];
 
-  const simPercent = similarity ? Math.round(similarity * 100) : null;
-  const diffClass = difficulty ? difficulty.toLowerCase() : 'unknown';
+  // Score
+  const simPercent = similarity != null ? Math.round(similarity * 100) : null;
+  const diffClass = (difficulty || '').toLowerCase() || 'unknown';
 
-  if (isHero) {
-    return (
-      <a
-        href={getLeetCodeUrl(problem_name)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hero-card"
-      >
-        <div className="hero-card-meta">
-          <span className={`difficulty-badge ${diffClass}`}>{difficulty}</span>
-        </div>
+  // Per-card explanation based on position + type
+  const getExplanation = () => {
+    if (recommendationType === 'similar') {
+      const explanations = [
+        'Builds directly on patterns you\'ve mastered',
+        'Shares core algorithmic structure with your history',
+        'Similar problem shape with a fresh constraint',
+        'Reinforces a technique you\'ve recently practiced',
+        'Applies familiar concepts in a new context',
+      ];
+      return explanations[index % explanations.length];
+    } else {
+      const explanations = [
+        'Introduces a concept you haven\'t explored yet',
+        'Expands your toolkit into unexplored territory',
+        'A fresh topic to broaden your problem-solving range',
+        'Targets a gap in your current skill profile',
+        'Challenges you with a completely new pattern',
+      ];
+      return explanations[index % explanations.length];
+    }
+  };
 
-        <div className="hero-card-main">
-          <div className="hero-card-details">
-            <h3 className="hero-card-title">{problem_name}</h3>
-            {/* Keeping description empty/blank as it is not available in the API */}
-            <p className="hero-card-description"></p>
-          </div>
-
-          <div className="hero-card-stat">
-            <span className="stat-label">
-              {simPercent !== null ? 'Match Rate' : 'Success Rate'}
-            </span>
-            <span className="stat-value">
-              {simPercent !== null ? `${simPercent}%` : '—'}
-            </span>
-          </div>
-        </div>
-
-        <div className="hero-card-footer">
-          <div className="tags-row">
-            {topicList.map((topic, index) => (
-              <span key={index} className="tag-pill">
-                {topic}
-              </span>
-            ))}
-          </div>
-          <div className="hero-arrow">
-            <ArrowRight size={20} />
-          </div>
-        </div>
-      </a>
-    );
-  }
+  const scoreLabel = recommendationType === 'similar' ? 'Match' : 'Novelty';
 
   return (
     <a
       href={getLeetCodeUrl(problem_name)}
       target="_blank"
       rel="noopener noreferrer"
-      className="problem-card"
+      className="pick-card"
+      title={`Open ${problem_name} on LeetCode`}
     >
-      <div className="problem-card-header">
-        <span className={`difficulty-badge ${diffClass}`}>{difficulty}</span>
-        <div className="problem-card-link-icon">
-          <ExternalLink size={16} />
-        </div>
+      {/* Big background pick number */}
+      <span className="pick-num" aria-hidden="true">#{index + 1}</span>
+
+      {/* Top row: badges */}
+      <div className="pick-card-top">
+        <span className={`difficulty-badge ${diffClass}`}>{difficulty || 'Unknown'}</span>
+        {topicList.slice(0, 3).map((t, i) => (
+          <span key={i} className="tag-pill">{t}</span>
+        ))}
+        {topicList.length > 3 && (
+          <span className="tag-pill">+{topicList.length - 3}</span>
+        )}
       </div>
 
-      <div className="problem-card-title-row">
-        <h3 className="problem-card-title">{problem_name}</h3>
+      {/* Title + score */}
+      <div className="pick-card-meta">
+        <div className="pick-card-left">
+          <h3 className="pick-card-title">{problem_name}</h3>
+
+          {/* Explanation */}
+          <div className="pick-card-explanation">
+            <Lightbulb size={12} style={{ flexShrink: 0, color: 'var(--coral)' }} />
+            <span>{getExplanation()}</span>
+          </div>
+        </div>
+
+        {/* Score box */}
+        {simPercent != null && (
+          <div className={`score-display has-score`}>
+            <span className="score-value">{simPercent}%</span>
+            <span className="score-label">{scoreLabel}</span>
+          </div>
+        )}
       </div>
 
-      {/* Keeping description empty/blank as it is not available in the API */}
-      <p className="problem-card-description"></p>
-
-      <div className="problem-card-footer">
-        <div className="tags-row">
-          {topicList.map((topic, index) => (
-            <span key={index} className="tag-pill">
-              {topic}
-            </span>
-          ))}
-        </div>
+      {/* CTA */}
+      <div className="btn-solve">
+        <ExternalLink size={15} />
+        <span>Solve on LeetCode</span>
       </div>
     </a>
   );

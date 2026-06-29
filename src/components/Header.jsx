@@ -1,69 +1,68 @@
 import React from 'react';
-import { Terminal, BookOpen, LogOut } from 'lucide-react';
-import logo from '../assets/image.png';
+import { LayoutDashboard, BookOpen, LogOut } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 export default function Header({ username, activeTab, setActiveTab, avatarUrl, onLogout }) {
-  // Get first letter of username for avatar content
-  const getAvatarContent = () => {
-    if (username && username.trim()) {
-      return username.trim().substring(0, 1).toUpperCase();
-    }
-    return '?';
-  };
+  const getInitial = () => (username?.trim() ? username.trim()[0].toUpperCase() : '?');
 
   return (
     <header className="app-header">
+      {/* Brand */}
       <div className="header-brand">
         <div className="logo-badge">
-          <img src={logo} alt="Upsolve Logo" />
+          <img src={logo} alt="Upsolve" />
         </div>
         <span className="brand-title">Upsolve</span>
       </div>
 
+      {/* Nav */}
       <div className="header-nav">
-        <nav className="nav-links">
+        <nav className="nav-links" aria-label="Main navigation">
           <button
             type="button"
+            id="nav-recommendations"
             className={`nav-link ${activeTab === 'recommendations' ? 'active' : ''}`}
             onClick={() => setActiveTab('recommendations')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <Terminal size={16} />
-            <span>Recommendations</span>
+            <LayoutDashboard size={14} />
+            <span>Dashboard</span>
           </button>
           <button
             type="button"
+            id="nav-how-it-works"
             className={`nav-link ${activeTab === 'how-it-works' ? 'active' : ''}`}
             onClick={() => setActiveTab('how-it-works')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <BookOpen size={16} />
+            <BookOpen size={14} />
             <span>How It Works</span>
           </button>
         </nav>
 
-        <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="header-avatar" title={username || 'Guest Profile'}>
+        {/* Profile + logout */}
+        <div className="header-profile">
+          <a 
+            href={`https://leetcode.com/u/${username}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="header-avatar" 
+            title={`View ${username}'s LeetCode Profile`}
+          >
             {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={username}
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-              />
+              <img src={avatarUrl} alt={username} />
             ) : (
-              getAvatarContent()
+              getInitial()
             )}
-          </div>
+          </a>
           {username && (
-            <button 
-              type="button" 
+            <button
+              type="button"
+              id="btn-logout"
               onClick={onLogout}
               className="btn-logout"
-              title="Logout"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              title="Sign out"
             >
-              <LogOut size={14} />
-              <span>Logout</span>
+              <LogOut size={13} />
+              <span>Sign out</span>
             </button>
           )}
         </div>

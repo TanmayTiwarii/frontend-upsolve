@@ -134,15 +134,21 @@ export const fetchLeetCodeProfile = async (username) => {
     }
   }
 
-  const solvedNum = matchedUser.submitStatsGlobal?.acSubmissionNum?.find(
-    (x) => x.difficulty === 'All'
-  )?.count || 0;
+  const submissions = matchedUser.submitStatsGlobal?.acSubmissionNum || [];
+  
+  const totalSolved = submissions.find(x => x.difficulty === 'All')?.count || 0;
+  const easySolved = submissions.find(x => x.difficulty === 'Easy')?.count || 0;
+  const mediumSolved = submissions.find(x => x.difficulty === 'Medium')?.count || 0;
+  const hardSolved = submissions.find(x => x.difficulty === 'Hard')?.count || 0;
 
   return {
     username: matchedUser.username,
     avatar: matchedUser.profile?.userAvatar || null,
     ranking: matchedUser.profile?.ranking || null,
-    solved: solvedNum,
+    totalSolved,
+    easySolved,
+    mediumSolved,
+    hardSolved,
     streak: matchedUser.userCalendar?.streak || 0,
     globalRanking: contestRanking?.globalRanking || matchedUser.profile?.ranking || null,
     rating: contestRanking?.rating || null,
