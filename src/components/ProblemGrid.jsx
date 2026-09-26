@@ -88,8 +88,15 @@ export default function ProblemGrid({
             Today's Personalized Picks
           </h2>
         </div>
-        <div className={`picks-type-badge ${isSimilar ? 'similar' : 'different'}`}>
-          {isSimilar ? '⟳ Similar' : '↗ New Territory'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {onBack && (
+            <button onClick={onBack} className="btn-back">
+              ← Dashboard
+            </button>
+          )}
+          <div className={`picks-type-badge ${isSimilar ? 'similar' : 'different'}`}>
+            {isSimilar ? '⟳ Similar' : '↗ New Territory'}
+          </div>
         </div>
       </div>
 
@@ -122,7 +129,7 @@ export default function ProblemGrid({
       {/* Back link */}
       {onBack && (
         <button onClick={onBack} className="btn-back" style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>
-          ← Choose a different mode
+          ← Back to Dashboard
         </button>
       )}
     </div>

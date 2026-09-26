@@ -1,9 +1,15 @@
 import React from 'react';
 import { Brain, HelpCircle, Database, Compass, Layers, Zap, GitBranch, Clock } from 'lucide-react';
 
-export default function HowItWorks() {
+export default function HowItWorks({ onBack }) {
   return (
     <div className="hiw-page">
+      {onBack && (
+        <button onClick={onBack} className="btn-back" style={{ alignSelf: 'flex-start' }}>
+          ← Back to Dashboard
+        </button>
+      )}
+
       {/* Hero header */}
       <div className="hiw-hero">
         <h1>
@@ -118,6 +124,12 @@ export default function HowItWorks() {
           </div>
         </div>
       </div>
+
+      {onBack && (
+        <button onClick={onBack} className="btn-back" style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>
+          ← Back to Dashboard
+        </button>
+      )}
     </div>
   );
 }

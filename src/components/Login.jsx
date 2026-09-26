@@ -85,17 +85,12 @@ export default function Login({ onLogin, loading, error }) {
                 spellCheck={false}
               />
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-ghost)', marginTop: '0.1rem' }}>
-              Want to try it out? Use demo account:{' '}
+            <div className="login-demo-hint">
+              <span>Want to try it out? Use demo account:</span>
               <button 
                 type="button" 
                 onClick={() => setInputValue('tiwaritanmay424')} 
-                style={{ 
-                  background: 'transparent', border: 'none', 
-                  color: 'var(--coral)', cursor: 'pointer', 
-                  padding: 0, fontFamily: 'var(--font-mono)',
-                  textDecoration: 'underline'
-                }}
+                className="login-demo-btn"
               >
                 tiwaritanmay424
               </button>

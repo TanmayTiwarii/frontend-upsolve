@@ -71,18 +71,6 @@ export default function Dashboard({ username, profileData, profileLoading, onFet
         </p>
       </div>
 
-      {/* Stats bar */}
-      <div className="stats-bar">
-        {stats.map((s) => (
-          <div key={s.label} className="stat-item">
-            <span className="stat-item-label">{s.label}</span>
-            <span className={`stat-item-value ${s.cls}`}>
-              {profileLoading ? '…' : s.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
       {/* Action cards */}
       <div className="action-cards-grid">
         {/* Similar */}
@@ -134,6 +122,18 @@ export default function Dashboard({ username, profileData, profileLoading, onFet
             </span>
           </div>
         </button>
+      </div>
+
+      {/* Stats bar */}
+      <div className="stats-bar">
+        {stats.map((s) => (
+          <div key={s.label} className="stat-item">
+            <span className="stat-item-label">{s.label}</span>
+            <span className={`stat-item-value ${s.cls}`}>
+              {profileLoading ? '…' : s.value}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -46,7 +46,7 @@ export default function AnalysisProgress({ username }) {
           </h2>
           {username && (
             <div className="analysis-username-tag">
-              <span style={{ color: 'var(--text-ghost)' }}>@</span>
+              <span style={{ color: 'var(--text-muted)' }}>@</span>
               <strong>{username}</strong>
             </div>
           )}
